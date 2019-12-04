@@ -10,29 +10,82 @@
       var canvas = document.getElementById("canvas");
       var ctx = canvas.getContext("2d");
 
-      var heightMin = 50;
+      var heightMin = 100;
       var landBorder = 230;
 
       var score = 0;
 
-      var FishList = {}, FishCount = 0;
+      var Entities = {}, EntityCount = 0;
 
       var Rod = {
+        x1: -15,
+        y1: -15,
+        x2: 15,
+        y2: 15,
         x_pos: canvas.width / 2,
         y_pos: heightMin,
-        size: 30,
-        catch: false,
-      };
-
-      var FishTemplate = {
-        width: 130,
-        height: 60,
+        colour: "#FFCACA",
+        bitten: false,
+        bite: function () {
+          this.bitten = true;
+          this.x1 = -30;
+          this.y1 = -15;
+          this.x2 = 30;
+          this.y2 = 115;
+          this.colour = "#FCCB2D";
+        },
+        reeled: function () {
+          score++;
+          this.bitten = false;
+          this.x1 = -15;
+          this.y1 = -15;
+          this.x2 = 15;
+          this.y2 = 15;
+          this.colour = "#FFCACA";
+        },
+        release: function () {
+          this.bitten = false;
+          this.x1 = -15;
+          this.y1 = -15;
+          this.x2 = 15;
+          this.y2 = 15;
+          this.colour = "#FFCACA";
+        },
       };
 
       function CreateFish() {
+        this.x1 = -130;
+        this.y1 = -30;
+        this.x2 = 0;
+        this.y2 = 30;
         this.x_pos = 0;
-        this.y_pos = Math.floor((Math.random() * (canvas.height - landBorder - FishTemplate.height * 2)) + 1) + landBorder + FishTemplate.height;
+        this.y_pos = Math.floor((Math.random() * (canvas.height - landBorder - (this.y2 - this.y1) * 2)) + 1) + landBorder + (this.y2 - this.y1);
+        this.speed = Math.random() * 3 + 2;
+        this.colour = "#FCCB2D";
+        this.collide = function () {
+          if (Rod.bitten) {return}; // Don't catch if the line has a bite
+          Rod.bite();
+          this.x_pos = canvas.width - this.x1;
+        };
+      };
+
+      function CreateBoot() {
+        this.x1 = -45;
+        this.y1 = -45;
+        this.x2 = 45;
+        this.y2 = 45;
+        this.x_pos = 0;
+        this.y_pos = Math.floor((Math.random() * (canvas.height - landBorder - (this.y2 - this.y1) * 2)) + 1) + landBorder + (this.y2 - this.y1);
         this.speed = Math.random() * 3 + 1;
+        this.colour = "#996502";
+        this.collide = function () {
+          if (!Rod.bitten) {return}; // Don't collide if the line doesn't have a bite
+          Rod.release();
+        };
+      };
+
+      function calcSize(var1, var2) {
+        return var2 - var1;
       };
 
       canvas.addEventListener("mousemove", function(e) {
@@ -42,43 +95,90 @@
       });
 
       canvas.addEventListener("mousedown", function(e) {
-        if (Rod.catch && Rod.y_pos < landBorder) {
-          score++;
-          Rod.catch = false;
+        if (Rod.bitten && Rod.y_pos + Rod.y2 / 2 < landBorder) {
+          Rod.reeled();
           console.log("Fish captured");
         };
       });
 
       // Spawn fish
-      setInterval(function () {
+      /*setInterval(function () {
         let doSpawn = Math.floor(Math.random() * 3 + 1);
         if (doSpawn == 1) {
           FishCount++;
           FishList[FishCount] = new CreateFish();
         };
+      }, 1000);*/
+
+      // Spawn entities
+      setInterval(function () {
+        let seed = Math.floor(Math.random() * 3 + 1);
+        EntityCount++;
+        switch (seed) {
+          case 1: case 2:
+            Entities[EntityCount] = new CreateFish();
+            break;
+          case 3:
+            Entities[EntityCount] = new CreateBoot();
+            break;
+          default:
+
+        };
       }, 1000);
-      //FishList["1"] = new CreateFish(); FishCount++;
+
+      //EntityCount++; Entities[EntityCount] = new CreateFish();
+
+      // Spawn boot
+      /*setInterval(function () {
+        let doSpawn = Math.floor(Math.random() * 3 + 1);
+        if (doSpawn == 1) {
+          BootCount++;
+          BootList[BootCount] = new CreateBoot();
+        };
+      }, 2000);*/
+
+      // Collision
+      /*function checkCollision(x1, y1, w1, h1, x2, y2, w2, h2) {
+        let x = Boolean(x1 >= x2 && x1 - w1 <= x2);
+        let y = Boolean(y1 - h1 / 2 < y2 && y1 - h1 / 2 < y2 && y1 + h1 / 2 > y2);
+      }*/
 
       // Update
       setInterval(function () {
-        for (entity in FishList) {
-          let Fish = FishList[entity];
+        for (entity in Entities) {
+          let Entity = Entities[entity];
           // Move fish
-          Fish.x_pos += Fish.speed;
-          if (Fish.x_pos - FishTemplate.width >= canvas.width) {
+          Entity.x_pos += Entity.speed;
+          // Check collision
+          if (checkCollision(Entity)) {Entity.collide()};
+          // Out of bounds
+          if (Entity.x_pos + Entity.x1 > canvas.width) {
+            delete Entities[entity];
+            console.log("Entity #" + entity + " despawned.");
+          };
+          /*if (Fish.x_pos - FishTemplate.width >= canvas.width) {
             delete FishList[entity];
             console.log("Fish #" + entity + " despawned.");
-          };
+          };*/
           // Catch fish
-          let x = Boolean(Fish.x_pos >= Rod.x_pos && Fish.x_pos - FishTemplate.width <= Rod.x_pos);
-          let y = Boolean(Fish.y_pos - FishTemplate.height / 2 < Rod.y_pos && Fish.y_pos - FishTemplate.height / 2 < Rod.y_pos && Fish.y_pos + FishTemplate.height / 2 > Rod.y_pos);
-          if (x && y && !Rod.catch) {
+          //let x = Boolean(Fish.x_pos >= Rod.x_pos && Fish.x_pos - FishTemplate.width <= Rod.x_pos);
+          //let y = Boolean(Fish.y_pos - FishTemplate.height / 2 < Rod.y_pos && Fish.y_pos - FishTemplate.height / 2 < Rod.y_pos && Fish.y_pos + FishTemplate.height / 2 > Rod.y_pos);
+          /*if (checkCollision(Fish.x_pos, ) && !Rod.catch) {
             delete FishList[entity];
             Rod.catch = true;
             console.log("Fish #" + entity + " caught.");
-          };
+          };*/
         };
       }, 1000/60);
+
+      function checkCollision(Obj) {
+
+        let x = Boolean(Rod.x_pos > Obj.x_pos + Obj.x1 && Rod.x_pos < Obj.x_pos + Obj.x2);
+        let y = Boolean(Rod.y_pos > Obj.y_pos + Obj.y1 && Rod.y_pos < Obj.y_pos + Obj.y2);
+        if (x && y) {
+          return true;
+        };
+      };
 
       function render() {
         // Backdrop
@@ -87,24 +187,30 @@
         ctx.fillStyle = "#498BD7";
         ctx.fillRect(0, landBorder, canvas.width, canvas.height - landBorder);
 
-        // Rod
+        // Line
         ctx.fillStyle = "#000000";
-        ctx.fillRect(canvas.width / 2 - 2, heightMin, 4, Rod.y_pos - heightMin);
-        ctx.fillStyle = "#FFCACA";
-        ctx.fillRect(canvas.width / 2 - Rod.size / 2, Rod.y_pos, Rod.size, Rod.size);
+        ctx.fillRect(Rod.x_pos - 2, heightMin, 4, Rod.y_pos - heightMin);
 
-        // Swimming Fish
-        for (entity in FishList) {
-          let Fish = FishList[entity];
-          ctx.fillStyle = "#FCCB2D";
-          ctx.fillRect(Fish.x_pos - FishTemplate.width, Fish.y_pos - FishTemplate.height / 2, FishTemplate.width, FishTemplate.height);
+        // Hook/Bait
+        ctx.fillStyle = Rod.colour;
+        if (Rod.bite) {
+          ctx.fillRect(Rod.x_pos + Rod.x1, Rod.y_pos + Rod.y1, calcSize(Rod.x1, Rod.x2), calcSize(Rod.y1, Rod.y2));
+        } else {
+          ctx.fillRect(Rod.x_pos + Rod.x1, Rod.y_pos + Rod.y1, calcSize(Rod.x1, Rod.x2), calcSize(Rod.y1, Rod.y2));
+        }
+
+        // Entities
+        for (entity in Entities) {
+          let Entity = Entities[entity];
+          ctx.fillStyle = Entity.colour;
+          ctx.fillRect(Entity.x_pos + Entity.x1, Entity.y_pos + Entity.y1, calcSize(Entity.x1, Entity.x2), calcSize(Entity.y1, Entity.y2));
         };
 
         // Caught fish
-        if (Rod.catch) {
+        /*if (Rod.catch) {
           ctx.fillStyle = "#FCCB2D";
           ctx.fillRect(canvas.width / 2 - FishTemplate.height / 2, Rod.y_pos, FishTemplate.height, FishTemplate.width);
-        };
+        };*/
 
         // Print score
         ctx.font = "30px Arial";
