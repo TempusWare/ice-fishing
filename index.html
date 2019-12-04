@@ -18,6 +18,7 @@
       var FishList = {}, FishCount = 0;
 
       var Rod = {
+        x_pos: canvas.width / 2,
         y_pos: heightMin,
         size: 30,
         catch: false,
@@ -69,7 +70,7 @@
             console.log("Fish #" + entity + " despawned.");
           };
           // Catch fish
-          let x = Boolean(Fish.x_pos >= canvas.width / 2);
+          let x = Boolean(Fish.x_pos >= Rod.x_pos && Fish.x_pos - FishTemplate.width <= Rod.x_pos);
           let y = Boolean(Fish.y_pos - FishTemplate.height / 2 < Rod.y_pos && Fish.y_pos - FishTemplate.height / 2 < Rod.y_pos && Fish.y_pos + FishTemplate.height / 2 > Rod.y_pos);
           if (x && y && !Rod.catch) {
             delete FishList[entity];
