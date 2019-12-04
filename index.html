@@ -13,7 +13,9 @@
       var heightMin = 100;
       var landBorder = 230;
 
-      var score = 0;
+      var coins = 0;
+      var fish = 0;
+      var worms = 3;
 
       var Entities = {}, EntityCount = 0;
 
@@ -26,25 +28,68 @@
         y_pos: heightMin,
         colour: "#FFCACA",
         bitten: false,
-        bite: function () {
+        baitless: false,
+        bite: function (type) {
+          switch (type) {
+            case "fluffy":
+              this.colour = "#FCCB2D";
+              this.fish = "fluffy";
+              break;
+            case "grey":
+              this.colour = "#A09BA0";
+              this.fish = "grey";
+              break;
+            case "mullet":
+              this.colour = "#D74C42";
+              this.fish = "mullet";
+              break;
+            default:
+              this.colour = "#FCCB2D";
+          };
           this.bitten = true;
-          this.x1 = -30;
-          this.y1 = -15;
-          this.x2 = 30;
-          this.y2 = 115;
-          this.colour = "#FCCB2D";
+          if (type === "mullet") {
+            this.x1 = -100;
+            this.y1 = -15;
+            this.x2 = 100;
+            this.y2 = 405;
+          } else {
+            this.x1 = -30;
+            this.y1 = -15;
+            this.x2 = 30;
+            this.y2 = 115;
+          };
         },
+        fish: undefined,
         reeled: function () {
-          score++;
+          fish++;
           this.bitten = false;
           this.x1 = -15;
           this.y1 = -15;
           this.x2 = 15;
           this.y2 = 15;
           this.colour = "#FFCACA";
+          this.fish = undefined;
         },
         release: function () {
           this.bitten = false;
+          this.x1 = -15;
+          this.y1 = -15;
+          this.x2 = 15;
+          this.y2 = 15;
+          this.colour = "#FFCACA";
+          this.fish = undefined;
+        },
+        zap: function () {
+          this.bitten = false;
+          this.baitless = true;
+          this.x1 = 0;
+          this.y1 = 0;
+          this.x2 = 0;
+          this.y2 = 0;
+          this.fish = undefined;
+        },
+        bait: function () {
+          this.baitless = false;
           this.x1 = -15;
           this.y1 = -15;
           this.x2 = 15;
@@ -58,34 +103,131 @@
         this.y1 = -30;
         this.x2 = 0;
         this.y2 = 30;
-        this.x_pos = 0;
+        this.x_pos = 0 - this.x2;
         this.y_pos = Math.floor((Math.random() * (canvas.height - landBorder - (this.y2 - this.y1) * 2)) + 1) + landBorder + (this.y2 - this.y1);
         this.speed = Math.random() * 3 + 2;
         this.colour = "#FCCB2D";
         this.collide = function () {
           if (Rod.bitten) {return}; // Don't catch if the line has a bite
-          Rod.bite();
-          this.x_pos = canvas.width - this.x1;
+          if (Rod.baitless) {return}; // Don't catch if the line doesn't have bait
+          Rod.bite("fluffy");
+          despawn(this);
         };
       };
+
+      function CreateGreyFish() {
+        this.x1 = -130;
+        this.y1 = -30;
+        this.x2 = 0;
+        this.y2 = 30;
+        this.x_pos = 0 - this.x2;
+        this.y_pos = Math.floor((Math.random() * (canvas.height - landBorder - (this.y2 - this.y1) * 2)) + 1) + landBorder + (this.y2 - this.y1);
+        this.speed = Math.random() * 4 + 5;
+        this.colour = "#A09BA0";
+        this.collide = function () {
+          if (Rod.bitten) {return}; // Don't catch if the line has a bite
+          if (Rod.baitless) {return}; // Don't catch if the line doesn't have bait
+          Rod.bite("grey");
+          despawn(this);
+        };
+      };
+
+      function CreateMullet() {
+        this.x1 = -420;
+        this.y1 = -100;
+        this.x2 = 0;
+        this.y2 = 100;
+        this.x_pos = 0 - this.x2;
+        this.y_pos = Math.floor((Math.random() * (canvas.height - landBorder - (this.y2 - this.y1) * 2)) + 1) + landBorder + (this.y2 - this.y1);
+        this.speed = Math.random() * 3 + 1;
+        this.colour = "#D74C41";
+        this.collide = function () {
+          if (!Rod.bitten) {return}; // Don't catch if the line does not have a bite
+          if (Rod.baitless) {return}; // Don't catch if the line doesn't have bait
+          Rod.bite("mullet");
+          despawn(this);
+        };
+      }
 
       function CreateBoot() {
         this.x1 = -45;
         this.y1 = -45;
         this.x2 = 45;
         this.y2 = 45;
-        this.x_pos = 0;
+        this.x_pos = 0 - this.x2;
         this.y_pos = Math.floor((Math.random() * (canvas.height - landBorder - (this.y2 - this.y1) * 2)) + 1) + landBorder + (this.y2 - this.y1);
         this.speed = Math.random() * 3 + 1;
         this.colour = "#996502";
+        this.collide = function () {
+          if (!Rod.bitten && Rod.fish != "mullet") {return}; // Don't collide if the line doesn't have a bite
+          Rod.release();
+        };
+      };
+
+      function CreateBarrel() {
+        this.x1 = -85;
+        this.y1 = -105;
+        this.x2 = 85;
+        this.y2 = 105;
+        this.x_pos = 0 - this.x2;
+        this.y_pos = Math.floor((Math.random() * (canvas.height - landBorder - (this.y2 - this.y1) * 2)) + 1) + landBorder + (this.y2 - this.y1);
+        this.speed = Math.random() * 3 + 1;
+        this.colour = "#D0976A";
         this.collide = function () {
           if (!Rod.bitten) {return}; // Don't collide if the line doesn't have a bite
           Rod.release();
         };
       };
 
+      function CreateJellyfish() {
+        this.x1 = -50;
+        this.y1 = -50;
+        this.x2 = 50;
+        this.y2 = 50;
+        this.x_pos = 0 - this.x2;
+        this.y_pos = Math.floor((Math.random() * (canvas.height - landBorder - (this.y2 - this.y1) * 2)) + 1) + landBorder + (this.y2 - this.y1);
+        this.speed = Math.random() * 3 + 1;
+        this.colour = "#2643AC";
+        this.collide = function () {
+          Rod.zap();
+        };
+      };
+
+      function CreateCan() {
+        this.x1 = -25;
+        this.y1 = -25;
+        this.x2 = 25;
+        this.y2 = 25;
+        this.x_pos = 0 - this.x2;
+        this.y_pos = Math.floor((Math.random() * (canvas.height - landBorder - (this.y2 - this.y1) * 2)) + 1) + landBorder + (this.y2 - this.y1);
+        this.speed = Math.random() * 3 + 1;
+        this.colour = "#CCCBD0";
+        this.collide = function () {
+          worms++;
+          despawn(this);
+        };
+      };
+
+      function CreateShark() {
+        this.x1 = -25;
+        this.y1 = -25;
+        this.x2 = 25;
+        this.y2 = 25;
+        this.x_pos = 0 - this.x2;
+        this.y_pos = Math.floor((Math.random() * (canvas.height - landBorder - (this.y2 - this.y1) * 2)) + 1) + landBorder + (this.y2 - this.y1);
+        this.speed = Math.random() * 3 + 1;
+        this.colour = "#CCCBD0";
+        this.collide = function () {
+          Rod.zap();
+        };
+      };
+
       function calcSize(var1, var2) {
         return var2 - var1;
+      };
+
+      function despawn(entity) {
+        entity.x_pos = canvas.width - entity.x1;
       };
 
       canvas.addEventListener("mousemove", function(e) {
@@ -95,53 +237,64 @@
       });
 
       canvas.addEventListener("mousedown", function(e) {
-        if (Rod.bitten && Rod.y_pos + Rod.y2 / 2 < landBorder) {
-          Rod.reeled();
-          console.log("Fish captured");
+        if (Rod.y_pos < landBorder) {
+          if (Rod.bitten) {
+            switch (Rod.fish) {
+              case "fluffy":
+                coins += 4;
+                break;
+              case "grey":
+                coins += 8;
+                break;
+              case "fluffy":
+                coins += 100;
+                break;
+              default:
+
+            };
+            Rod.reeled();
+          };
+          if (Rod.baitless && worms > 0) {
+            worms--;
+            Rod.bait();
+            console.log("Re-baited")
+          };
+        } else if (Rod.bitten) {
+          Rod.release();
         };
       });
 
-      // Spawn fish
-      /*setInterval(function () {
-        let doSpawn = Math.floor(Math.random() * 3 + 1);
-        if (doSpawn == 1) {
-          FishCount++;
-          FishList[FishCount] = new CreateFish();
-        };
-      }, 1000);*/
-
       // Spawn entities
       setInterval(function () {
-        let seed = Math.floor(Math.random() * 3 + 1);
+        let seed = Math.floor(Math.random() * 10 + 1);
         EntityCount++;
         switch (seed) {
-          case 1: case 2:
-            Entities[EntityCount] = new CreateFish();
-            break;
-          case 3:
+          case 1:
             Entities[EntityCount] = new CreateBoot();
             break;
+          case 2:
+            Entities[EntityCount] = new CreateBarrel();
+            break;
+          case 3:
+            Entities[EntityCount] = new CreateJellyfish();
+            break;
+          case 4:
+            Entities[EntityCount] = new CreateGreyFish();
+            break;
+          case 5:
+            Entities[EntityCount] = new CreateMullet();
+            break;
+          case 6:
+            Entities[EntityCount] = new CreateCan();
+            break;
+          case 7:
+            Entities[EntityCount] = new CreateShark();
+            break;
           default:
-
+            Entities[EntityCount] = new CreateFish();
+            break;
         };
-      }, 1000);
-
-      //EntityCount++; Entities[EntityCount] = new CreateFish();
-
-      // Spawn boot
-      /*setInterval(function () {
-        let doSpawn = Math.floor(Math.random() * 3 + 1);
-        if (doSpawn == 1) {
-          BootCount++;
-          BootList[BootCount] = new CreateBoot();
-        };
-      }, 2000);*/
-
-      // Collision
-      /*function checkCollision(x1, y1, w1, h1, x2, y2, w2, h2) {
-        let x = Boolean(x1 >= x2 && x1 - w1 <= x2);
-        let y = Boolean(y1 - h1 / 2 < y2 && y1 - h1 / 2 < y2 && y1 + h1 / 2 > y2);
-      }*/
+      }, 2000);
 
       // Update
       setInterval(function () {
@@ -156,22 +309,10 @@
             delete Entities[entity];
             console.log("Entity #" + entity + " despawned.");
           };
-          /*if (Fish.x_pos - FishTemplate.width >= canvas.width) {
-            delete FishList[entity];
-            console.log("Fish #" + entity + " despawned.");
-          };*/
-          // Catch fish
-          //let x = Boolean(Fish.x_pos >= Rod.x_pos && Fish.x_pos - FishTemplate.width <= Rod.x_pos);
-          //let y = Boolean(Fish.y_pos - FishTemplate.height / 2 < Rod.y_pos && Fish.y_pos - FishTemplate.height / 2 < Rod.y_pos && Fish.y_pos + FishTemplate.height / 2 > Rod.y_pos);
-          /*if (checkCollision(Fish.x_pos, ) && !Rod.catch) {
-            delete FishList[entity];
-            Rod.catch = true;
-            console.log("Fish #" + entity + " caught.");
-          };*/
         };
       }, 1000/60);
 
-      function checkCollision(Obj) {
+      function checkCollision(Obj) { // https://stackoverflow.com/a/7301852
         let a = {
           x: Rod.x_pos + Rod.x1,
           y: Rod.y_pos + Rod.y1,
@@ -190,11 +331,6 @@
           ((a.x + a.width) < b.x) ||
           (a.x > (b.x + b.width))
         );
-        /*let x = Boolean(Rod.x_pos > Obj.x_pos + Obj.x1 && Rod.x_pos < Obj.x_pos + Obj.x2);
-        let y = Boolean(Rod.y_pos > Obj.y_pos + Obj.y1 && Rod.y_pos < Obj.y_pos + Obj.y2);
-        if (x && y) {
-          return true;
-        };*/
       };
 
       function render() {
@@ -223,16 +359,10 @@
           ctx.fillRect(Entity.x_pos + Entity.x1, Entity.y_pos + Entity.y1, calcSize(Entity.x1, Entity.x2), calcSize(Entity.y1, Entity.y2));
         };
 
-        // Caught fish
-        /*if (Rod.catch) {
-          ctx.fillStyle = "#FCCB2D";
-          ctx.fillRect(canvas.width / 2 - FishTemplate.height / 2, Rod.y_pos, FishTemplate.height, FishTemplate.width);
-        };*/
-
-        // Print score
+        // Print stats
         ctx.font = "30px Arial";
         ctx.fillStyle = "#000000";
-        ctx.fillText(score, 20, 40);
+        ctx.fillText("Fish: " + fish + " | Worms: " + worms + " | Coins: " + coins, 20, 40);
       };
 
       setInterval(render, 1000/60);
