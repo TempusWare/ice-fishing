@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+  </head>
+  <body>
+    <canvas id="canvas" width="1280" height="720"></canvas>
+    <script>
+      var canvas = document.getElementById("canvas");
+      var ctx = canvas.getContext("2d");
+
+      var heightMin = 50;
+      var landBorder = 230;
+
+      var score = 0;
+
+      var FishList = {}, FishCount = 0;
+
+      var Rod = {
+        y_pos: heightMin,
+        size: 30,
+        catch: false,
+      };
+
+      var FishTemplate = {
+        width: 130,
+        height: 60,
+      };
+
+      function CreateFish() {
+        this.x_pos = 0;
+        this.y_pos = Math.floor((Math.random() * (canvas.height - landBorder - FishTemplate.height * 2)) + 1) + landBorder + FishTemplate.height;
+        this.speed = Math.random() * 3 + 1;
+      };
+
+      canvas.addEventListener("mousemove", function(e) {
+        var rect = e.target.getBoundingClientRect(), y = e.clientY - rect.top; // https://stackoverflow.com/a/42111623
+        if (y <= heightMin) {return}; // Barrier at the top
+        Rod.y_pos = y;
+      });
+
+      canvas.addEventListener("mousedown", function(e) {
+        if (Rod.catch && Rod.y_pos < landBorder) {
+          score++;
+          Rod.catch = false;
+          console.log("Fish captured");
+        };
+      });
+
+      // Spawn fish
+      setInterval(function () {
+        let doSpawn = Math.floor(Math.random() * 3 + 1);
+        if (doSpawn == 1) {
+          FishCount++;
+          FishList[FishCount] = new CreateFish();
+        };
+      }, 1000);
+      //FishList["1"] = new CreateFish(); FishCount++;
+
+      // Update
+      setInterval(function () {
+        for (entity in FishList) {
+          let Fish = FishList[entity];
+          // Move fish
+          Fish.x_pos += Fish.speed;
+          if (Fish.x_pos - FishTemplate.width >= canvas.width) {
+            delete FishList[entity];
+            console.log("Fish #" + entity + " despawned.");
+          };
+          // Catch fish
+          let x = Boolean(Fish.x_pos >= canvas.width / 2);
+          let y = Boolean(Fish.y_pos - FishTemplate.height / 2 < Rod.y_pos && Fish.y_pos - FishTemplate.height / 2 < Rod.y_pos && Fish.y_pos + FishTemplate.height / 2 > Rod.y_pos);
+          if (x && y && !Rod.catch) {
+            delete FishList[entity];
+            Rod.catch = true;
+            console.log("Fish #" + entity + " caught.");
+          };
+        };
+      }, 1000/60);
+
+      function render() {
+        // Backdrop
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillRect(0, 0, canvas.width, landBorder);
+        ctx.fillStyle = "#498BD7";
+        ctx.fillRect(0, landBorder, canvas.width, canvas.height - landBorder);
+
+        // Rod
+        ctx.fillStyle = "#000000";
+        ctx.fillRect(canvas.width / 2 - 2, heightMin, 4, Rod.y_pos - heightMin);
+        ctx.fillStyle = "#FFCACA";
+        ctx.fillRect(canvas.width / 2 - Rod.size / 2, Rod.y_pos, Rod.size, Rod.size);
+
+        // Swimming Fish
+        for (entity in FishList) {
+          let Fish = FishList[entity];
+          ctx.fillStyle = "#FCCB2D";
+          ctx.fillRect(Fish.x_pos - FishTemplate.width, Fish.y_pos - FishTemplate.height / 2, FishTemplate.width, FishTemplate.height);
+        };
+
+        // Caught fish
+        if (Rod.catch) {
+          ctx.fillStyle = "#FCCB2D";
+          ctx.fillRect(canvas.width / 2 - FishTemplate.height / 2, Rod.y_pos, FishTemplate.height, FishTemplate.width);
+        };
+
+        // Print score
+        ctx.font = "30px Arial";
+        ctx.fillStyle = "#000000";
+        ctx.fillText(score, 20, 40);
+      };
+
+      setInterval(render, 1000/60);
+    </script>
+  </body>
+  <style>
+    body {
+      text-align: center;
+    }
+    canvas {
+      border: 1px solid black;
+    }
+  </style>
+</html>
