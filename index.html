@@ -172,12 +172,29 @@
       }, 1000/60);
 
       function checkCollision(Obj) {
-
-        let x = Boolean(Rod.x_pos > Obj.x_pos + Obj.x1 && Rod.x_pos < Obj.x_pos + Obj.x2);
+        let a = {
+          x: Rod.x_pos + Rod.x1,
+          y: Rod.y_pos + Rod.y1,
+          width: calcSize(Rod.x1, Rod.x2),
+          height: calcSize(Rod.y1, Rod.y2),
+        },
+        b = {
+          x: Obj.x_pos + Obj.x1,
+          y: Obj.y_pos + Obj.y1,
+          width: calcSize(Obj.x1, Obj.x2),
+          height: calcSize(Obj.y1, Obj.y2),
+        };
+        return !(
+          ((a.y + a.height) < (b.y)) ||
+          (a.y > (b.y + b.height)) ||
+          ((a.x + a.width) < b.x) ||
+          (a.x > (b.x + b.width))
+        );
+        /*let x = Boolean(Rod.x_pos > Obj.x_pos + Obj.x1 && Rod.x_pos < Obj.x_pos + Obj.x2);
         let y = Boolean(Rod.y_pos > Obj.y_pos + Obj.y1 && Rod.y_pos < Obj.y_pos + Obj.y2);
         if (x && y) {
           return true;
-        };
+        };*/
       };
 
       function render() {
