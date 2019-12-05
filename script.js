@@ -3,6 +3,7 @@ var ctx = canvas.getContext("2d");
 
 var heightMin = 100;
 var landBorder = 230;
+var lineThickness = 4;
 
 var coins = 0;
 var fish = 0;
@@ -96,7 +97,7 @@ function CreateFish() {
   this.y2 = 30;
   this.x_pos = 0 - this.x2;
   this.y_pos = Math.floor((Math.random() * (canvas.height - landBorder - (this.y2 - this.y1) * 2)) + 1) + landBorder + (this.y2 - this.y1);
-  this.speed = Math.random() * 3 + 2;
+  this.speed = Math.random() * 3 + 6;
   this.colour = "#FCCB2D";
   this.collide = function () {
     if (Rod.bitten) {return}; // Don't catch if the line has a bite
@@ -104,6 +105,7 @@ function CreateFish() {
     Rod.bite("fluffy");
     despawn(this);
   };
+  this.life = 0;
 };
 
 function CreateGreyFish() {
@@ -113,7 +115,7 @@ function CreateGreyFish() {
   this.y2 = 30;
   this.x_pos = 0 - this.x2;
   this.y_pos = Math.floor((Math.random() * (canvas.height - landBorder - (this.y2 - this.y1) * 2)) + 1) + landBorder + (this.y2 - this.y1);
-  this.speed = Math.random() * 4 + 5;
+  this.speed = Math.random() * 4 + 8;
   this.colour = "#A09BA0";
   this.collide = function () {
     if (Rod.bitten) {return}; // Don't catch if the line has a bite
@@ -121,6 +123,7 @@ function CreateGreyFish() {
     Rod.bite("grey");
     despawn(this);
   };
+  this.life = 0;
 };
 
 function CreateMullet() {
@@ -130,7 +133,7 @@ function CreateMullet() {
   this.y2 = 100;
   this.x_pos = 0 - this.x2;
   this.y_pos = Math.floor((Math.random() * (canvas.height - landBorder - (this.y2 - this.y1) * 2)) + 1) + landBorder + (this.y2 - this.y1);
-  this.speed = Math.random() * 3 + 1;
+  this.speed = Math.random() * 3 + 4;
   this.colour = "#D74C41";
   this.collide = function () {
     if (!Rod.bitten) {return}; // Don't catch if the line does not have a bite
@@ -138,6 +141,7 @@ function CreateMullet() {
     Rod.bite("mullet");
     despawn(this);
   };
+  this.life = 0;
 }
 
 function CreateBoot() {
@@ -147,12 +151,13 @@ function CreateBoot() {
   this.y2 = 45;
   this.x_pos = 0 - this.x2;
   this.y_pos = Math.floor((Math.random() * (canvas.height - landBorder - (this.y2 - this.y1) * 2)) + 1) + landBorder + (this.y2 - this.y1);
-  this.speed = Math.random() * 3 + 1;
+  this.speed = Math.random() * 3 + 4;
   this.colour = "#996502";
   this.collide = function () {
     if (!Rod.bitten && Rod.fish != "mullet") {return}; // Don't collide if the line doesn't have a bite
     Rod.release();
   };
+  this.life = 0;
 };
 
 function CreateBarrel() {
@@ -162,12 +167,13 @@ function CreateBarrel() {
   this.y2 = 105;
   this.x_pos = 0 - this.x2;
   this.y_pos = Math.floor((Math.random() * (canvas.height - landBorder - (this.y2 - this.y1) * 2)) + 1) + landBorder + (this.y2 - this.y1);
-  this.speed = Math.random() * 3 + 1;
+  this.speed = Math.random() * 3 + 4;
   this.colour = "#D0976A";
   this.collide = function () {
     if (!Rod.bitten) {return}; // Don't collide if the line doesn't have a bite
     Rod.release();
   };
+  this.life = 0;
 };
 
 function CreateJellyfish() {
@@ -177,11 +183,13 @@ function CreateJellyfish() {
   this.y2 = 50;
   this.x_pos = 0 - this.x2;
   this.y_pos = Math.floor((Math.random() * (canvas.height - landBorder - (this.y2 - this.y1) * 2)) + 1) + landBorder + (this.y2 - this.y1);
-  this.speed = Math.random() * 3 + 1;
+  this.speed = Math.random() * 3 + 4;
   this.colour = "#2643AC";
+  this.collision_type = "cut";
   this.collide = function () {
     Rod.zap();
   };
+  this.life = 0;
 };
 
 function CreateCan() {
@@ -191,12 +199,13 @@ function CreateCan() {
   this.y2 = 25;
   this.x_pos = 0 - this.x2;
   this.y_pos = Math.floor((Math.random() * (canvas.height - landBorder - (this.y2 - this.y1) * 2)) + 1) + landBorder + (this.y2 - this.y1);
-  this.speed = Math.random() * 3 + 1;
+  this.speed = Math.random() * 3 + 4;
   this.colour = "#CCCBD0";
   this.collide = function () {
     worms++;
     despawn(this);
   };
+  this.life = 0;
 };
 
 function CreateShark() {
@@ -206,11 +215,13 @@ function CreateShark() {
   this.y2 = 50;
   this.x_pos = 0 - this.x2;
   this.y_pos = Math.floor((Math.random() * (canvas.height - landBorder - (this.y2 - this.y1) * 2)) + 1) + landBorder + (this.y2 - this.y1);
-  this.speed = Math.random() * 3 + 1;
+  this.speed = Math.random() * 3 + 4;
   this.colour = "#CCCBD0";
+  this.collision_type = "cut";
   this.collide = function () {
     Rod.zap();
   };
+  this.life = 0;
 };
 
 function calcSize(var1, var2) {
@@ -293,8 +304,13 @@ setInterval(function () {
     let Entity = Entities[entity];
     // Move fish
     Entity.x_pos += Entity.speed;
+    Entity.speed = Entity.speed * Math.pow(0.999, 2);
     // Check collision
-    if (checkCollision(Entity)) {Entity.collide()};
+    if (Entity.collision_type === "cut") {
+      if (checkLine(Entity)) {Entity.collide()};
+    } else {
+      if (checkCollision(Entity)) {Entity.collide()};
+    };
     // Out of bounds
     if (Entity.x_pos + Entity.x1 > canvas.width) {
       delete Entities[entity];
@@ -324,6 +340,20 @@ function checkCollision(Obj) { // https://stackoverflow.com/a/7301852
   );
 };
 
+function checkLine(Obj) {
+  let a = {
+    x: Rod.x_pos + lineThickness / -2,
+    width: lineThickness,
+  },
+  b = {
+    x: Obj.x_pos + Obj.x1,
+    width: calcSize(Obj.x1, Obj.x2),
+  };
+  if (Rod.y_pos >= Obj.y_pos + Obj.y1 && !Boolean(((a.x + a.width) < b.x) || (a.x > (b.x + b.width)))) {
+    return true;
+  };
+}
+
 function render() {
   // Backdrop
   ctx.fillStyle = "#FFFFFF";
@@ -333,7 +363,7 @@ function render() {
 
   // Line
   ctx.fillStyle = "#000000";
-  ctx.fillRect(Rod.x_pos - 2, heightMin, 4, Rod.y_pos - heightMin);
+  ctx.fillRect(Rod.x_pos - lineThickness / 2, heightMin, lineThickness, Rod.y_pos - heightMin);
 
   // Hook/Bait
   ctx.fillStyle = Rod.colour;
