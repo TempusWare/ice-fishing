@@ -96,8 +96,10 @@ function CreateFish() {
   this.x2 = 0;
   this.y2 = 30;
   this.x_pos = 0 - this.x2;
-  this.y_pos = Math.floor((Math.random() * (canvas.height - landBorder - (this.y2 - this.y1) * 2)) + 1) + landBorder + (this.y2 - this.y1);
-  this.speed = Math.random() * 3 + 6;
+  this.y_pos = undefined;
+  this.init_y_pos = genYPos(this);
+  //this.speed = Math.random() * 5;
+  this.speed = 5;
   this.colour = "#FCCB2D";
   this.collide = function () {
     if (Rod.bitten) {return}; // Don't catch if the line has a bite
@@ -106,6 +108,8 @@ function CreateFish() {
     despawn(this);
   };
   this.life = 0;
+  this.lifespan = canvas.width - this.x1;
+  this.direction = genDirect();
 };
 
 function CreateGreyFish() {
@@ -114,8 +118,9 @@ function CreateGreyFish() {
   this.x2 = 0;
   this.y2 = 30;
   this.x_pos = 0 - this.x2;
-  this.y_pos = Math.floor((Math.random() * (canvas.height - landBorder - (this.y2 - this.y1) * 2)) + 1) + landBorder + (this.y2 - this.y1);
-  this.speed = Math.random() * 4 + 8;
+  this.y_pos = undefined;
+  this.init_y_pos = genYPos(this);
+  this.speed = 8;
   this.colour = "#A09BA0";
   this.collide = function () {
     if (Rod.bitten) {return}; // Don't catch if the line has a bite
@@ -124,6 +129,7 @@ function CreateGreyFish() {
     despawn(this);
   };
   this.life = 0;
+  this.direction = genDirect();
 };
 
 function CreateMullet() {
@@ -132,8 +138,9 @@ function CreateMullet() {
   this.x2 = 0;
   this.y2 = 100;
   this.x_pos = 0 - this.x2;
-  this.y_pos = Math.floor((Math.random() * (canvas.height - landBorder - (this.y2 - this.y1) * 2)) + 1) + landBorder + (this.y2 - this.y1);
-  this.speed = Math.random() * 3 + 4;
+  this.y_pos = undefined;
+  this.init_y_pos = genYPos(this);
+  this.speed = 2;
   this.colour = "#D74C41";
   this.collide = function () {
     if (!Rod.bitten) {return}; // Don't catch if the line does not have a bite
@@ -142,6 +149,7 @@ function CreateMullet() {
     despawn(this);
   };
   this.life = 0;
+  this.direction = genDirect();
 }
 
 function CreateBoot() {
@@ -150,14 +158,16 @@ function CreateBoot() {
   this.x2 = 45;
   this.y2 = 45;
   this.x_pos = 0 - this.x2;
-  this.y_pos = Math.floor((Math.random() * (canvas.height - landBorder - (this.y2 - this.y1) * 2)) + 1) + landBorder + (this.y2 - this.y1);
-  this.speed = Math.random() * 3 + 4;
+  this.y_pos = undefined;
+  this.init_y_pos = genYPos(this);
+  this.speed = 6;
   this.colour = "#996502";
   this.collide = function () {
     if (!Rod.bitten && Rod.fish != "mullet") {return}; // Don't collide if the line doesn't have a bite
     Rod.release();
   };
   this.life = 0;
+  this.direction = genDirect();
 };
 
 function CreateBarrel() {
@@ -166,14 +176,16 @@ function CreateBarrel() {
   this.x2 = 85;
   this.y2 = 105;
   this.x_pos = 0 - this.x2;
-  this.y_pos = Math.floor((Math.random() * (canvas.height - landBorder - (this.y2 - this.y1) * 2)) + 1) + landBorder + (this.y2 - this.y1);
-  this.speed = Math.random() * 3 + 4;
+  this.y_pos = undefined;
+  this.init_y_pos = genYPos(this);
+  this.speed = 7;
   this.colour = "#D0976A";
   this.collide = function () {
     if (!Rod.bitten) {return}; // Don't collide if the line doesn't have a bite
     Rod.release();
   };
   this.life = 0;
+  this.direction = genDirect();
 };
 
 function CreateJellyfish() {
@@ -182,14 +194,16 @@ function CreateJellyfish() {
   this.x2 = 50;
   this.y2 = 50;
   this.x_pos = 0 - this.x2;
-  this.y_pos = Math.floor((Math.random() * (canvas.height - landBorder - (this.y2 - this.y1) * 2)) + 1) + landBorder + (this.y2 - this.y1);
-  this.speed = Math.random() * 3 + 4;
+  this.y_pos = undefined;
+  this.init_y_pos = genYPos(this);
+  this.speed = 6;
   this.colour = "#2643AC";
   this.collision_type = "cut";
   this.collide = function () {
     Rod.zap();
   };
   this.life = 0;
+  this.direction = genDirect();
 };
 
 function CreateCan() {
@@ -198,14 +212,16 @@ function CreateCan() {
   this.x2 = 25;
   this.y2 = 25;
   this.x_pos = 0 - this.x2;
-  this.y_pos = Math.floor((Math.random() * (canvas.height - landBorder - (this.y2 - this.y1) * 2)) + 1) + landBorder + (this.y2 - this.y1);
-  this.speed = Math.random() * 3 + 4;
+  this.y_pos = undefined;
+  this.init_y_pos = genYPos(this);
+  this.speed = 5;
   this.colour = "#CCCBD0";
   this.collide = function () {
     worms++;
     despawn(this);
   };
   this.life = 0;
+  this.direction = genDirect();
 };
 
 function CreateShark() {
@@ -214,14 +230,16 @@ function CreateShark() {
   this.x2 = 200;
   this.y2 = 50;
   this.x_pos = 0 - this.x2;
-  this.y_pos = Math.floor((Math.random() * (canvas.height - landBorder - (this.y2 - this.y1) * 2)) + 1) + landBorder + (this.y2 - this.y1);
-  this.speed = Math.random() * 3 + 4;
+  this.y_pos = undefined;
+  this.init_y_pos = genYPos(this);
+  this.speed = 5;
   this.colour = "#CCCBD0";
   this.collision_type = "cut";
   this.collide = function () {
     Rod.zap();
   };
   this.life = 0;
+  this.direction = genDirect();
 };
 
 function calcSize(var1, var2) {
@@ -230,6 +248,14 @@ function calcSize(var1, var2) {
 
 function despawn(entity) {
   entity.x_pos = canvas.width - entity.x1;
+};
+
+function genYPos(type) {
+  return Math.floor((Math.random() * (canvas.height - landBorder - (type.y2 - type.y1) * 2 - ((canvas.width - type.x1) / 8)) + 1) + landBorder + (type.y2 - type.y1) + ((canvas.width - type.x1) / 16));
+};
+
+function genDirect() {
+  return Math.random() < 0.5 ? -1 : 1; // https://stackoverflow.com/a/8611855
 };
 
 canvas.addEventListener("mousemove", function(e) {
@@ -259,7 +285,7 @@ canvas.addEventListener("mousedown", function(e) {
     if (Rod.baitless && worms > 0) {
       worms--;
       Rod.bait();
-      console.log("Re-baited")
+      //console.log("Re-baited")
     };
   } else if (Rod.bitten) {
     Rod.release();
@@ -269,6 +295,7 @@ canvas.addEventListener("mousedown", function(e) {
 // Spawn entities
 setInterval(function () {
   let seed = Math.floor(Math.random() * 10 + 1);
+  //let seed = 0;
   EntityCount++;
   switch (seed) {
     case 1:
@@ -298,13 +325,39 @@ setInterval(function () {
   };
 }, 3000);
 
+//EntityCount++; Entities[EntityCount] = new CreateFish();
+
 // Update
 setInterval(function () {
   for (entity in Entities) {
     let Entity = Entities[entity];
     // Move fish
     Entity.x_pos += Entity.speed;
-    Entity.speed = Entity.speed * Math.pow(0.999, 2);
+    //Entity.speed = Entity.speed * Math.pow(0.999, 2);
+    let life = Entity.x_pos / Entity.lifespan;
+    /*if (life < 0.2) {
+      Entity.y_pos += 1;
+    } else if (life < 0.3) {
+      Entity.y_pos += .6;
+    } else if (life < 0.5) {
+      Entity.y_pos += .3;
+    } else if (life < 0.6) {
+      Entity.y_pos += .1;
+    } else if (life < 0.7) {
+      Entity.y_pos -= 0.3;
+    } else if (life < 0.8) {
+      Entity.y_pos -= 0.6;
+    } else {
+      Entity.y_pos -= 1;
+    }*/
+    Entity.y_pos = (1/(canvas.width - Entity.x1) * Math.pow(Entity.x_pos, 2) - Entity.x_pos) / (4 * Entity.direction) + Entity.init_y_pos;
+    //console.log(entity, Entity.y_pos)
+    //(1280+130)/16 = 88.125
+    /*if (Entity.x_pos / Entity.lifespan < 0.5) {
+      Entity.y_pos += 1;
+    } else {
+      Entity.y_pos -= 1;
+    };*/
     // Check collision
     if (Entity.collision_type === "cut") {
       if (checkLine(Entity)) {Entity.collide()};
