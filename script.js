@@ -39,6 +39,7 @@ var sprites = {
 for (sprite in sprites) {
   sprites[sprite].img = new Image();
   sprites[sprite].img.src = "res/" + sprite + ".png";
+  console.log("Loaded " + sprite + " sprite.");
 };
 
 var canvasW, canvasH, centre;
@@ -48,9 +49,9 @@ canvasH = window.innerHeight;
 canvas.width = canvasW;
 canvas.height = canvasH;
 centre = canvasW / 2;
-var landBorder = canvasH / 3,
-heightMin = landBorder / 3,
-deckLoops = Math.ceil(canvasW / sprites["deck_side"].img.width),
+var landBorder = canvasH * 0.3,
+heightMin = canvasH * 0.065,
+deckLoops = /*Math.ceil(canvasW / sprites["deck_side"].img.width)*/ 2,
 water = ctx.createLinearGradient(0, 0, 0, canvasH - landBorder);
 water.addColorStop(0, "#B8D9E4");
 water.addColorStop(1, "#4A82C8");
@@ -80,7 +81,7 @@ function sizeWindow() {
   if (typeof Rod !== "undefined") {
     Rod.x_pos = centre;
   };
-  deckLoops = Math.ceil(canvasW / sprites["deck_side"].img.width);
+  deckLoops = /*Math.ceil(canvasW / sprites["deck_side"].img.width)*/ 2;
   water = ctx.createLinearGradient(0, 0, 0, canvasH - landBorder);
   water.addColorStop(0, "#B8D9E4");
   water.addColorStop(1, "#4A82C8");
@@ -431,7 +432,7 @@ function spawn() {
   };
   console.log("Entity #" + EntityCount + " spawned.");
 }
-setInterval(spawn, 3000);
+//setInterval(spawn, 3000);
 
 //EntityCount++; Entities[EntityCount] = new CreateFish();
 
@@ -456,7 +457,7 @@ function update() {
     };
   };
 };
-setInterval(update, 1000/60);
+//setInterval(update, 1000/60);
 
 function checkCollision(Obj) { // https://stackoverflow.com/a/7301852
   let a = {
@@ -572,4 +573,10 @@ function render() {
   ctx.fillText("Fish: " + fish + " | Worms: " + worms + " | Coins: " + coins, 20, 40);
 };
 
-setInterval(render, 1000/60);
+//setInterval(render, 1000/60);
+
+setInterval(spawn, 3000);
+setInterval(function () {
+  update();
+  render();
+}, 1000/60)
