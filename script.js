@@ -1,9 +1,95 @@
 var canvas = document.getElementById("canvas");
 var ctx = canvas.getContext("2d");
 
-var heightMin = 100;
-var landBorder = 230;
-var lineThickness = 4;
+var sprites = {
+  fluffy: {
+    x_offset: -37,
+    y_offset: -3,
+  },
+  fluffy_flipped: {
+    x_offset: -37,
+    y_offset: -3,
+  },
+  bait: {
+    x_offset: -10,
+    y_offset: -22,
+  },
+  fluffy_bite: {
+    x_offset: -39,
+    y_offset: -27,
+  },
+  penguin: {
+    x_offset: 0,
+    y_offset: 0,
+  },
+  deck_back: {
+    x_offset: -93,
+    y_offset: -60,
+  },
+  deck_front: {
+    x_offset: -93,
+    y_offset: -60,
+  },
+  deck_side: {
+    x_offset: 0,
+    y_offset: 20,
+  },
+};
+
+for (sprite in sprites) {
+  sprites[sprite].img = new Image();
+  sprites[sprite].img.src = "res/" + sprite + ".png";
+};
+
+var canvasW, canvasH, centre;
+
+canvasW = window.innerWidth;
+canvasH = window.innerHeight;
+canvas.width = canvasW;
+canvas.height = canvasH;
+centre = canvasW / 2;
+var landBorder = canvasH / 3,
+heightMin = landBorder / 3,
+deckLoops = Math.ceil(canvasW / sprites["deck_side"].img.width),
+water = ctx.createLinearGradient(0, 0, 0, canvasH - landBorder);
+water.addColorStop(0, "#B8D9E4");
+water.addColorStop(1, "#4A82C8");
+
+function sizeWindow() {
+  canvasW = window.innerWidth; // https://stackoverflow.com/a/17507923
+  canvasH = window.innerHeight;
+  landBorder = canvasH / 3;
+  heightMin = landBorder / 3;
+  for (entity in Entities) {
+    /*let Entity = Entities[entity];
+    //Entity.init_y_pos = landBorder + (canvasH - landBorder) / 2;
+    let pre_init_y_pos = Entity.init_y_pos;
+    let sole_init_y_pos = pre_init_y_pos - landBorder - (Entity.y2 - Entity.y1);
+    let new_init_y_pos = sole_init_y_pos / (canvas.height - landBorder - (Entity.y2 - Entity.y1) * 2 - ((canvas.width - Entity.x1) / 8)) * (canvasH - landBorder - (Entity.y2 - Entity.y1) * 2 - ((canvasW - Entity.x1) / 8));
+    //return Math.floor((Math.random() * (canvas.height - landBorder - (type.y2 - type.y1) * 2 - ((canvas.width - type.x1) / 8)) + 1) + landBorder + (type.y2 - type.y1) + ((canvas.width - type.x1) / 16));
+    Entity.init_y_pos = new_init_y_pos;
+    let pre_x_pos = Entity.x_pos;
+    let difference = centre - pre_x_pos;
+    let new_x_pos = canvasW / 2 - difference;
+    Entity.x_pos = new_x_pos;*/
+    despawn(Entities[entity]);
+  };
+  canvas.width = canvasW;
+  canvas.height = canvasH;
+  centre = canvasW / 2;
+  if (typeof Rod !== "undefined") {
+    Rod.x_pos = centre;
+  };
+  deckLoops = Math.ceil(canvasW / sprites["deck_side"].img.width);
+  water = ctx.createLinearGradient(0, 0, 0, canvasH - landBorder);
+  water.addColorStop(0, "#B8D9E4");
+  water.addColorStop(1, "#4A82C8");
+};
+
+window.addEventListener("resize", sizeWindow);
+
+var lineThickness = 1,
+holeSize = 4;
 
 var coins = 0;
 var fish = 0;
@@ -12,15 +98,24 @@ var worms = 3;
 var Entities = {}, EntityCount = 0;
 
 var Rod = {
-  x1: -15,
+  x1: -20,
   y1: -15,
   x2: 15,
-  y2: 15,
-  x_pos: canvas.width / 2,
-  y_pos: heightMin,
+  y2: 20,
+  x_pos: centre,
+  y_pos: heightMin * 2,
   colour: "#FFCACA",
   bitten: false,
   baitless: false,
+  default: function () {
+    this.bitten = false;
+    this.baitless = false;
+    this.x1 = -20;
+    this.y1 = -15;
+    this.x2 = 15;
+    this.y2 = 20;
+    this.colour = "#FFCACA";
+  },
   bite: function (type) {
     switch (type) {
       case "fluffy":
@@ -50,26 +145,19 @@ var Rod = {
       this.x2 = 30;
       this.y2 = 115;
     };
+    this.stage = 3;
   },
   fish: undefined,
   reeled: function () {
     fish++;
-    this.bitten = false;
-    this.x1 = -15;
-    this.y1 = -15;
-    this.x2 = 15;
-    this.y2 = 15;
-    this.colour = "#FFCACA";
+    this.default(),
     this.fish = undefined;
+    this.stage = 0;
   },
   release: function () {
-    this.bitten = false;
-    this.x1 = -15;
-    this.y1 = -15;
-    this.x2 = 15;
-    this.y2 = 15;
-    this.colour = "#FFCACA";
+    this.default(),
     this.fish = undefined;
+    this.stage = 2;
   },
   zap: function () {
     this.bitten = false;
@@ -79,23 +167,27 @@ var Rod = {
     this.x2 = 0;
     this.y2 = 0;
     this.fish = undefined;
+    this.stage = 3;
   },
   bait: function () {
     this.baitless = false;
-    this.x1 = -15;
-    this.y1 = -15;
-    this.x2 = 15;
-    this.y2 = 15;
-    this.colour = "#FFCACA";
+    this.default(),
+    this.stage = 2;
   },
+  stage: 0,
+  hook_x_offset: -30,
+  hook_y_offset: -37,
 };
 
 function CreateFish() {
+  this.direction = genDirect();
+  this.direction2 = genDirect();
   this.x1 = -130;
   this.y1 = -30;
   this.x2 = 0;
   this.y2 = 30;
-  this.x_pos = 0 - this.x2;
+  this.x_pos = (this.direction2 == 1 ? (0 + this.x1) : (canvas.width - this.x1)); // https://stackoverflow.com/a/8611855
+  //this.x_pos = canvas.width / 2;
   this.y_pos = undefined;
   this.init_y_pos = genYPos(this);
   //this.speed = Math.random() * 5;
@@ -109,7 +201,7 @@ function CreateFish() {
   };
   this.life = 0;
   this.lifespan = canvas.width - this.x1;
-  this.direction = genDirect();
+  this.name = "fluffy";
 };
 
 function CreateGreyFish() {
@@ -145,6 +237,7 @@ function CreateMullet() {
   this.collide = function () {
     if (!Rod.bitten) {return}; // Don't catch if the line does not have a bite
     if (Rod.baitless) {return}; // Don't catch if the line doesn't have bait
+    if (Rod.fish === "mullet") {return}; // Don't catch if the hook has a mullet
     Rod.bite("mullet");
     despawn(this);
   };
@@ -247,7 +340,7 @@ function calcSize(var1, var2) {
 };
 
 function despawn(entity) {
-  entity.x_pos = canvas.width - entity.x1;
+  entity.x_pos = canvas.width * 3;
 };
 
 function genYPos(type) {
@@ -260,7 +353,21 @@ function genDirect() {
 
 canvas.addEventListener("mousemove", function(e) {
   var rect = e.target.getBoundingClientRect(), y = e.clientY - rect.top; // https://stackoverflow.com/a/42111623
-  if (y <= heightMin) {return}; // Barrier at the top
+  if (y <= heightMin - Rod.hook_y_offset) {return}; // Barrier at the top
+  if (!Rod.baitless && !Rod.bitten) {
+    if (y <= landBorder) {
+      Rod.stage = 0;
+    } else if (y < Rod.y_pos) {
+      Rod.stage = 1;
+      setTimeout(function () {
+        if (Rod.y_pos > landBorder) {
+          Rod.stage = 2;
+        };
+      }, 250);
+    } else {
+      Rod.stage = 2;
+    };
+  };
   Rod.y_pos = y;
 });
 
@@ -274,11 +381,10 @@ canvas.addEventListener("mousedown", function(e) {
         case "grey":
           coins += 8;
           break;
-        case "fluffy":
+        case "mullet":
           coins += 100;
           break;
         default:
-
       };
       Rod.reeled();
     };
@@ -293,9 +399,9 @@ canvas.addEventListener("mousedown", function(e) {
 });
 
 // Spawn entities
-setInterval(function () {
-  let seed = Math.floor(Math.random() * 10 + 1);
-  //let seed = 0;
+function spawn() {
+  //let seed = Math.floor(Math.random() * 10 + 1);
+  let seed = 0;
   EntityCount++;
   switch (seed) {
     case 1:
@@ -323,41 +429,20 @@ setInterval(function () {
       Entities[EntityCount] = new CreateFish();
       break;
   };
-}, 3000);
+  console.log("Entity #" + EntityCount + " spawned.");
+}
+setInterval(spawn, 3000);
 
 //EntityCount++; Entities[EntityCount] = new CreateFish();
 
 // Update
-setInterval(function () {
+function update() {
   for (entity in Entities) {
     let Entity = Entities[entity];
     // Move fish
-    Entity.x_pos += Entity.speed;
-    //Entity.speed = Entity.speed * Math.pow(0.999, 2);
+    Entity.x_pos += Entity.speed * Entity.direction2;
     let life = Entity.x_pos / Entity.lifespan;
-    /*if (life < 0.2) {
-      Entity.y_pos += 1;
-    } else if (life < 0.3) {
-      Entity.y_pos += .6;
-    } else if (life < 0.5) {
-      Entity.y_pos += .3;
-    } else if (life < 0.6) {
-      Entity.y_pos += .1;
-    } else if (life < 0.7) {
-      Entity.y_pos -= 0.3;
-    } else if (life < 0.8) {
-      Entity.y_pos -= 0.6;
-    } else {
-      Entity.y_pos -= 1;
-    }*/
     Entity.y_pos = (1/(canvas.width - Entity.x1) * Math.pow(Entity.x_pos, 2) - Entity.x_pos) / (4 * Entity.direction) + Entity.init_y_pos;
-    //console.log(entity, Entity.y_pos)
-    //(1280+130)/16 = 88.125
-    /*if (Entity.x_pos / Entity.lifespan < 0.5) {
-      Entity.y_pos += 1;
-    } else {
-      Entity.y_pos -= 1;
-    };*/
     // Check collision
     if (Entity.collision_type === "cut") {
       if (checkLine(Entity)) {Entity.collide()};
@@ -365,12 +450,13 @@ setInterval(function () {
       if (checkCollision(Entity)) {Entity.collide()};
     };
     // Out of bounds
-    if (Entity.x_pos + Entity.x1 > canvas.width) {
+    if (Entity.x_pos + Entity.x1 > canvas.width * 2) {
       delete Entities[entity];
       console.log("Entity #" + entity + " despawned.");
     };
   };
-}, 1000/60);
+};
+setInterval(update, 1000/60);
 
 function checkCollision(Obj) { // https://stackoverflow.com/a/7301852
   let a = {
@@ -405,32 +491,79 @@ function checkLine(Obj) {
   if (Rod.y_pos >= Obj.y_pos + Obj.y1 && !Boolean(((a.x + a.width) < b.x) || (a.x > (b.x + b.width)))) {
     return true;
   };
-}
+};
+
+/*function addKeyframe() {
+  for (entity in Entities) {
+    let Entity = Entities[entity];
+    Entity.
+  };
+};*/
 
 function render() {
   // Backdrop
   ctx.fillStyle = "#FFFFFF";
-  ctx.fillRect(0, 0, canvas.width, landBorder);
-  ctx.fillStyle = "#498BD7";
-  ctx.fillRect(0, landBorder, canvas.width, canvas.height - landBorder);
+  ctx.fillRect(0, 0, canvasW, landBorder);
+  ctx.fillStyle = water;
+  ctx.fillRect(0, landBorder, canvasW, canvasH - landBorder);
+
+  // Deck
+  let DeckSprites = {
+    back: sprites["deck_back"],
+    front: sprites["deck_front"],
+    side: sprites["deck_side"],
+  };
+
+  // Deck Back
+  ctx.drawImage(DeckSprites.back.img, 0, 0, DeckSprites.back.img.width, DeckSprites.back.img.height, centre - ((landBorder / holeSize) * (DeckSprites.front.img.width / DeckSprites.front.img.height)) / 2, landBorder - landBorder / holeSize, (landBorder / holeSize) * (DeckSprites.front.img.width / DeckSprites.front.img.height), landBorder / holeSize);
+
+  // Penguin
+  let PenguinSprite = sprites["penguin"];
+  ctx.drawImage(PenguinSprite.img, 0, 0, PenguinSprite.img.width, PenguinSprite.img.height, centre + PenguinSprite.x_offset, heightMin + PenguinSprite.y_offset, landBorder * 1.48 / 2, landBorder / 2);
 
   // Line
   ctx.fillStyle = "#000000";
-  ctx.fillRect(Rod.x_pos - lineThickness / 2, heightMin, lineThickness, Rod.y_pos - heightMin);
+  ctx.fillRect(Rod.x_pos - lineThickness / 2, heightMin, lineThickness, Rod.y_pos - heightMin - 30);
 
   // Hook/Bait
-  ctx.fillStyle = Rod.colour;
-  if (Rod.bite) {
-    ctx.fillRect(Rod.x_pos + Rod.x1, Rod.y_pos + Rod.y1, calcSize(Rod.x1, Rod.x2), calcSize(Rod.y1, Rod.y2));
+  //ctx.fillStyle = Rod.colour;
+  let HookSprite = sprites["bait"];
+  if (Rod.bitten) {
+    ctx.drawImage(HookSprite.img, 3 * 60, 0, 60, 60, Rod.x_pos + Rod.hook_x_offset, Rod.y_pos + Rod.hook_y_offset, 60, 60);
+    //ctx.fillRect(Rod.x_pos + Rod.x1, Rod.y_pos + Rod.y1, calcSize(Rod.x1, Rod.x2), calcSize(Rod.y1, Rod.y2));
+    let BaitSprite = sprites[Rod.fish + "_bite"];
+    ctx.drawImage(BaitSprite.img, Rod.x_pos + BaitSprite.x_offset, Rod.y_pos + BaitSprite.y_offset);
   } else {
+    ctx.drawImage(HookSprite.img, Rod.stage * 60, 0, 60, 60, Rod.x_pos + Rod.x1 + HookSprite.x_offset, Rod.y_pos + Rod.y1 + HookSprite.y_offset, 60, 60);
+  };
+  /* else {}
+  {
     ctx.fillRect(Rod.x_pos + Rod.x1, Rod.y_pos + Rod.y1, calcSize(Rod.x1, Rod.x2), calcSize(Rod.y1, Rod.y2));
-  }
+
+    ctx.drawImage(Sprite.img, Rod.stage * 60, 0, 60, 60, Rod.x_pos + Rod.x1 + Sprite.x_offset, Rod.y_pos + Rod.y1 + Sprite.y_offset, 60, 60);
+  }*/
+
+  // Deck Front
+  ctx.drawImage(DeckSprites.front.img, 0, 0, DeckSprites.front.img.width, DeckSprites.front.img.height, centre - ((landBorder / holeSize) * (DeckSprites.front.img.width / DeckSprites.front.img.height)) / 2, landBorder - landBorder / holeSize, (landBorder / holeSize) * (DeckSprites.front.img.width / DeckSprites.front.img.height), landBorder / holeSize);
 
   // Entities
   for (entity in Entities) {
     let Entity = Entities[entity];
-    ctx.fillStyle = Entity.colour;
-    ctx.fillRect(Entity.x_pos + Entity.x1, Entity.y_pos + Entity.y1, calcSize(Entity.x1, Entity.x2), calcSize(Entity.y1, Entity.y2));
+    //ctx.fillStyle = Entity.colour;
+    //ctx.fillRect(Entity.x_pos + Entity.x1, Entity.y_pos + Entity.y1, calcSize(Entity.x1, Entity.x2), calcSize(Entity.y1, Entity.y2));
+    let Sprite = Entity.direction2 == 1 ? sprites[Entity.name] : sprites[Entity.name + "_flipped"];
+    /*if (Entity.direction2 != 1) {
+      ctx.scale(-1, 1);
+    };*/
+    ctx.drawImage(Sprite.img, Entity.x_pos + Entity.x1 + Sprite.x_offset, Entity.y_pos + Entity.y1 + Sprite.y_offset)
+    /*if (Entity.direction2 != 1) {
+      ctx.scale(-1, 1);
+    };*/
+  };
+
+  // Deck Side
+  for (var i = 0; i < deckLoops; i++) {
+    ctx.drawImage(DeckSprites.side.img, 0, 0, DeckSprites.side.img.width, DeckSprites.side.img.height, i * DeckSprites.side.img.width, landBorder - DeckSprites.side.img.height + DeckSprites.side.y_offset, DeckSprites.side.img.width, DeckSprites.side.img.height);
   };
 
   // Print stats
