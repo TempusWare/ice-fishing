@@ -12,11 +12,11 @@ var sprites = {
   },
   bait: {
     x_offset: -10,
-    y_offset: -22,
+    y_offset: /*-22*/ 0,
   },
   fluffy_bite: {
     x_offset: -39,
-    y_offset: -27,
+    y_offset: -30,
   },
   penguin: {
     x_offset: 0,
@@ -51,43 +51,10 @@ canvas.height = canvasH;
 centre = canvasW / 2;
 var landBorder = canvasH * 0.3,
 heightMin = canvasH * 0.065,
-deckLoops = /*Math.ceil(canvasW / sprites["deck_side"].img.width)*/ 2,
+deckLoops = 2,
 water = ctx.createLinearGradient(0, 0, 0, canvasH - landBorder);
 water.addColorStop(0, "#B8D9E4");
 water.addColorStop(1, "#4A82C8");
-
-function sizeWindow() {
-  canvasW = window.innerWidth; // https://stackoverflow.com/a/17507923
-  canvasH = window.innerHeight;
-  landBorder = canvasH / 3;
-  heightMin = landBorder / 3;
-  for (entity in Entities) {
-    /*let Entity = Entities[entity];
-    //Entity.init_y_pos = landBorder + (canvasH - landBorder) / 2;
-    let pre_init_y_pos = Entity.init_y_pos;
-    let sole_init_y_pos = pre_init_y_pos - landBorder - (Entity.y2 - Entity.y1);
-    let new_init_y_pos = sole_init_y_pos / (canvas.height - landBorder - (Entity.y2 - Entity.y1) * 2 - ((canvas.width - Entity.x1) / 8)) * (canvasH - landBorder - (Entity.y2 - Entity.y1) * 2 - ((canvasW - Entity.x1) / 8));
-    //return Math.floor((Math.random() * (canvas.height - landBorder - (type.y2 - type.y1) * 2 - ((canvas.width - type.x1) / 8)) + 1) + landBorder + (type.y2 - type.y1) + ((canvas.width - type.x1) / 16));
-    Entity.init_y_pos = new_init_y_pos;
-    let pre_x_pos = Entity.x_pos;
-    let difference = centre - pre_x_pos;
-    let new_x_pos = canvasW / 2 - difference;
-    Entity.x_pos = new_x_pos;*/
-    despawn(Entities[entity]);
-  };
-  canvas.width = canvasW;
-  canvas.height = canvasH;
-  centre = canvasW / 2;
-  if (typeof Rod !== "undefined") {
-    Rod.x_pos = centre;
-  };
-  deckLoops = /*Math.ceil(canvasW / sprites["deck_side"].img.width)*/ 2;
-  water = ctx.createLinearGradient(0, 0, 0, canvasH - landBorder);
-  water.addColorStop(0, "#B8D9E4");
-  water.addColorStop(1, "#4A82C8");
-};
-
-window.addEventListener("resize", sizeWindow);
 
 var lineThickness = 1,
 holeSize = 4;
@@ -100,9 +67,9 @@ var Entities = {}, EntityCount = 0;
 
 var Rod = {
   x1: -20,
-  y1: -15,
+  y1: 0,
   x2: 15,
-  y2: 20,
+  y2: 35,
   x_pos: centre,
   y_pos: heightMin * 2,
   colour: "#FFCACA",
@@ -112,9 +79,9 @@ var Rod = {
     this.bitten = false;
     this.baitless = false;
     this.x1 = -20;
-    this.y1 = -15;
+    this.y1 = 0;
     this.x2 = 15;
-    this.y2 = 20;
+    this.y2 = 15;
     this.colour = "#FFCACA";
   },
   bite: function (type) {
@@ -142,9 +109,9 @@ var Rod = {
       this.y2 = 405;
     } else {
       this.x1 = -30;
-      this.y1 = -15;
+      this.y1 = 0;
       this.x2 = 30;
-      this.y2 = 115;
+      this.y2 = 130;
     };
     this.stage = 3;
   },
@@ -177,7 +144,7 @@ var Rod = {
   },
   stage: 0,
   hook_x_offset: -30,
-  hook_y_offset: -37,
+  hook_y_offset: /*-37*/ 0,
 };
 
 function CreateFish() {
@@ -354,7 +321,7 @@ function genDirect() {
 
 canvas.addEventListener("mousemove", function(e) {
   var rect = e.target.getBoundingClientRect(), y = e.clientY - rect.top; // https://stackoverflow.com/a/42111623
-  if (y <= heightMin - Rod.hook_y_offset) {return}; // Barrier at the top
+  if (y <= heightMin) {return}; // Barrier at the top
   if (!Rod.baitless && !Rod.bitten) {
     if (y <= landBorder) {
       Rod.stage = 0;
@@ -524,7 +491,8 @@ function render() {
 
   // Line
   ctx.fillStyle = "#000000";
-  ctx.fillRect(Rod.x_pos - lineThickness / 2, heightMin, lineThickness, Rod.y_pos - heightMin - 30);
+  //ctx.fillRect(Rod.x_pos - lineThickness / 2, heightMin, lineThickness, Rod.y_pos - heightMin - 30);
+  ctx.fillRect(Rod.x_pos - lineThickness / 2, heightMin, lineThickness, Rod.y_pos - heightMin);
 
   // Hook/Bait
   //ctx.fillStyle = Rod.colour;
